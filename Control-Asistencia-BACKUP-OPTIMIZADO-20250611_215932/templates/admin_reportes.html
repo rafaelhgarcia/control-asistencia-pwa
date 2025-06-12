@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Administrador</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            padding: 1rem 0;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .icon-daily { background: linear-gradient(135deg, #28a745, #20c997); }
+        .icon-weekly { background: linear-gradient(135deg, #007bff, #6610f2); }
+        .icon-monthly { background: linear-gradient(135deg, #fd7e14, #e83e8c); }
+        .icon-custom { background: linear-gradient(135deg, #6c757d, #495057); }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .attendance-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-present { background: #d4edda; color: #155724; }
+        .status-absent { background: #f8d7da; color: #721c24; }
+        .status-late { background: #fff3cd; color: #856404; }
+        .status-partial { background: #cce5ff; color: #004085; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-user-shield me-2"></i>
+                Panel Administrador
+            </a>
+            
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/empleados">
+                            <i class="fas fa-users me-1"></i>Empleados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/ubicaciones">
+                            <i class="fas fa-map-marker-alt me-1"></i>Ubicaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/reportes">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>Administrador
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/logout">
+                                <i class="fas fa-sign-out-alt me-1"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-1">Reportes de Asistencia</h1>
+                <p class="text-muted mb-0">Genere y consulte reportes detallados</p>
+            </div>
+        </div>
+        
+        <!-- Report Types -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="report-card" onclick="generateDailyReport()">
+                    <div class="report-icon icon-daily mx-auto">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <h6 class="text-center mb-2">Reporte Diario</h6>
+                    <p class="text-muted small text-center mb-0">Asistencia del día actual</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="report-card" onclick="generateWeeklyReport()">
+                    <div class="report-icon icon-weekly mx-auto">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <h6 class="text-center mb-2">Reporte Semanal</h6>
+                    <p class="text-muted small text-center mb-0">Asistencia de esta semana</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="report-card" onclick="generateMonthlyReport()">
+                    <div class="report-icon icon-monthly mx-auto">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h6 class="text-center mb-2">Reporte Mensual</h6>
+                    <p class="text-muted small text-center mb-0">Asistencia del mes actual</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="report-card" data-bs-toggle="modal" data-bs-target="#customReportModal">
+                    <div class="report-icon icon-custom mx-auto">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h6 class="text-center mb-2">Reporte Personalizado</h6>
+                    <p class="text-muted small text-center mb-0">Seleccione fechas específicas</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Results -->
+        <div class="content-card" id="reportResults" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" id="reportTitle">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Resultados del Reporte
+                </h5>
+                <button class="btn btn-success" onclick="exportToCSV()">
+                    <i class="fas fa-download me-2"></i>
+                    Exportar CSV
+                </button>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div class="row mb-4" id="reportStats">
+                <!-- Dynamic stats will be loaded here -->
+            </div>
+            
+            <!-- Report Table -->
+            <div class="table-responsive">
+                <table class="table table-hover" id="reportTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Fecha</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Horas Trabajadas</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <!-- Dynamic data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Report Modal -->
+    <div class="modal fade" id="customReportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog me-2"></i>
+                        Reporte Personalizado
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customReportForm">
+                        <div class="mb-3">
+                            <label for="fechaInicio" class="form-label">Fecha de Inicio *</label>
+                            <input type="date" class="form-control" id="fechaInicio" name="fechaInicio" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fechaFin" class="form-label">Fecha de Fin *</label>
+                            <input type="date" class="form-control" id="fechaFin" name="fechaFin" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="empleadoFiltro" class="form-label">Empleado (Opcional)</label>
+                            <select class="form-control" id="empleadoFiltro" name="empleadoFiltro">
+                                <option value="">Todos los empleados</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Reporte</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipoReporte" id="detallado" value="detallado" checked>
+                                <label class="form-check-label" for="detallado">
+                                    Detallado (por día)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipoReporte" id="resumen" value="resumen">
+                                <label class="form-check-label" for="resumen">
+                                    Resumen (totales)
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="generateCustomReport()">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentReportData = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployeesForFilter();
+            setDefaultDates();
+        });
+        
+        function setDefaultDates() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('fechaInicio').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('fechaFin').value = today.toISOString().split('T')[0];
+        }
+        
+        async function loadEmployeesForFilter() {
+            try {
+                const response = await fetch('/api/empleados');
+                const employees = await response.json();
+                
+                const select = document.getElementById('empleadoFiltro');
+                employees.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = `${emp.nombre} ${emp.apellido}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando empleados:', error);
+            }
+        }
+        
+        async function generateDailyReport() {
+            const today = new Date().toISOString().split('T')[0];
+            await generateReport(today, today, null, 'Reporte Diario - ' + formatDate(today));
+        }
+        
+        async function generateWeeklyReport() {
+            const today = new Date();
+            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+            const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+            
+            const start = startOfWeek.toISOString().split('T')[0];
+            const end = endOfWeek.toISOString().split('T')[0];
+            
+            await generateReport(start, end, null, 'Reporte Semanal - ' + formatDate(start) + ' al ' + formatDate(end));
+        }
+        
+        async function generateMonthlyReport() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            const start = startOfMonth.toISOString().split('T')[0];
+            const end = endOfMonth.toISOString().split('T')[0];
+            
+            await generateReport(start, end, null, 'Reporte Mensual - ' + getMonthName(today.getMonth()) + ' ' + today.getFullYear());
+        }
+        
+        async function generateCustomReport() {
+            const form = document.getElementById('customReportForm');
+            const formData = new FormData(form);
+            
+            const fechaInicio = formData.get('fechaInicio');
+            const fechaFin = formData.get('fechaFin');
+            const empleadoId = formData.get('empleadoFiltro') || null;
+            
+            if (!fechaInicio || !fechaFin) {
+                alert('Por favor seleccione las fechas');
+                return;
+            }
+            
+            if (new Date(fechaInicio) > new Date(fechaFin)) {
+                alert('La fecha de inicio debe ser anterior a la fecha de fin');
+                return;
+            }
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('customReportModal'));
+            modal.hide();
+            
+            const title = `Reporte Personalizado - ${formatDate(fechaInicio)} al ${formatDate(fechaFin)}`;
+            await generateReport(fechaInicio, fechaFin, empleadoId, title);
+        }
+        
+        async function generateReport(startDate, endDate, employeeId, title) {
+            try {
+                // Show loading
+                document.getElementById('reportResults').style.display = 'block';
+                document.getElementById('reportTitle').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando reporte...';
+                
+                // Build API URL
+                let url = `/api/reportes/asistencia?fecha_inicio=${startDate}&fecha_fin=${endDate}`;
+                if (employeeId) {
+                    url += `&empleado_id=${employeeId}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                currentReportData = data.registros || [];
+                
+                // Update title
+                document.getElementById('reportTitle').innerHTML = '<i class="fas fa-chart-bar me-2"></i>' + title;
+                
+                // Generate statistics
+                generateReportStats(data.estadisticas || {});
+                
+                // Generate table
+                generateReportTable(currentReportData);
+                
+            } catch (error) {
+                console.error('Error generando reporte:', error);
+                document.getElementById('reportTitle').innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error generando reporte';
+            }
+        }
+        
+        function generateReportStats(stats) {
+            const container = document.getElementById('reportStats');
+            
+            const defaultStats = {
+                total_empleados: 0,
+                presentes: 0,
+                ausentes: 0,
+                tardanzas: 0,
+                promedio_horas: 0
+            };
+            
+            const finalStats = { ...defaultStats, ...stats };
+            
+            container.innerHTML = `
+                <div class="col-md-2">
+                    <div class="text-center">
+                        <h4 class="text-primary mb-0">${finalStats.total_empleados}</h4>
+                        <small class="text-muted">Total Empleados</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-center">
+                        <h4 class="text-success mb-0">${finalStats.presentes}</h4>
+                        <small class="text-muted">Presentes</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-center">
+                        <h4 class="text-danger mb-0">${finalStats.ausentes}</h4>
+                        <small class="text-muted">Ausentes</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-center">
+                        <h4 class="text-warning mb-0">${finalStats.tardanzas}</h4>
+                        <small class="text-muted">Tardanzas</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-center">
+                        <h4 class="text-info mb-0">${finalStats.promedio_horas.toFixed(1)}h</h4>
+                        <small class="text-muted">Promedio Horas</small>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateReportTable(data) {
+            const tbody = document.getElementById('reportTableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-inbox fa-2x text-muted mb-2"></i><br>
+                            No hay registros para el período seleccionado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                const entrada = record.hora_entrada || '--:--';
+                const salida = record.hora_salida || '--:--';
+                const horas = calculateWorkedHours(record.hora_entrada, record.hora_salida);
+                const status = getAttendanceStatus(record);
+                
+                html += `
+                    <tr>
+                        <td>${record.empleado_nombre}</td>
+                        <td>${formatDate(record.fecha)}</td>
+                        <td>${entrada}</td>
+                        <td>${salida}</td>
+                        <td>${horas}</td>
+                        <td><span class="attendance-status ${status.class}">${status.text}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function calculateWorkedHours(entrada, salida) {
+            if (!entrada || !salida) return '--';
+            
+            const start = new Date(`2000-01-01 ${entrada}`);
+            const end = new Date(`2000-01-01 ${salida}`);
+            const diff = (end - start) / (1000 * 60 * 60);
+            
+            return diff.toFixed(1) + 'h';
+        }
+        
+        function getAttendanceStatus(record) {
+            if (!record.hora_entrada) {
+                return { class: 'status-absent', text: 'Ausente' };
+            }
+            
+            if (!record.hora_salida) {
+                return { class: 'status-partial', text: 'Sin salida' };
+            }
+            
+            // Considerar tardanza si entra después de las 9:00 AM
+            const entrada = new Date(`2000-01-01 ${record.hora_entrada}`);
+            const limite = new Date(`2000-01-01 09:00:00`);
+            
+            if (entrada > limite) {
+                return { class: 'status-late', text: 'Tardanza' };
+            }
+            
+            return { class: 'status-present', text: 'Presente' };
+        }
+        
+        function exportToCSV() {
+            if (currentReportData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const headers = ['Empleado', 'Fecha', 'Entrada', 'Salida', 'Horas Trabajadas', 'Estado'];
+            const csvContent = [
+                headers.join(','),
+                ...currentReportData.map(record => {
+                    const entrada = record.hora_entrada || '';
+                    const salida = record.hora_salida || '';
+                    const horas = calculateWorkedHours(record.hora_entrada, record.hora_salida);
+                    const status = getAttendanceStatus(record);
+                    
+                    return [
+                        `"${record.empleado_nombre}"`,
+                        record.fecha,
+                        entrada,
+                        salida,
+                        horas,
+                        `"${status.text}"`
+                    ].join(',');
+                })
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `reporte_asistencia_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+        
+        function getMonthName(monthIndex) {
+            const months = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+            return months[monthIndex];
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asistencia</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            min-height: 100vh;
+            padding: 10px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container { 
+            max-width: 480px; 
+            margin: 0 auto; 
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 1rem;
+            background: white;
+        }
+        .header-card { 
+            text-align: center; 
+            padding: 1.2rem; 
+        }
+        .employee-avatar {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: #28a745; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 0.8rem;
+            color: white; font-size: 1.5rem; font-weight: bold;
+        }
+        .employee-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .employee-details {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .clock-display { 
+            font-size: 1.4rem; 
+            color: #28a745; 
+            margin: 0.8rem 0; 
+        }
+        .clock-time {
+            font-family: 'Courier New', monospace;
+            font-weight: 300;
+        }
+        .clock-date {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .status-card { 
+            padding: 1rem; 
+        }
+        .status-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #2c3e50;
+        }
+        .status-item {
+            display: flex; 
+            align-items: center; 
+            padding: 0.6rem;
+            margin-bottom: 0.6rem; 
+            border-radius: 10px; 
+            background: #f8f9fa;
+        }
+        .status-icon {
+            width: 35px; height: 35px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 0.8rem; font-size: 1rem;
+        }
+        .status-text {
+            flex: 1;
+        }
+        .status-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .status-description {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .status-pending { background: #ffc107; color: #856404; }
+        .status-success { background: #28a745; color: white; }
+        .status-error { background: #dc3545; color: white; }
+        .camera-section {
+            padding: 1rem;
+        }
+        .camera-preview {
+            width: 100%; height: 200px; border-radius: 12px;
+            background: #f8f9fa; border: 2px dashed #dee2e6;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .camera-placeholder {
+            text-align: center;
+            color: #6c757d;
+        }
+        .camera-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .camera-placeholder p {
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        .camera-controls {
+            text-align: center;
+        }
+        .btn-camera {
+            width: 45px; height: 45px; border-radius: 50%;
+            background: #28a745; border: none; color: white; 
+            font-size: 1.2rem; margin: 0 0.3rem;
+            transition: all 0.2s ease;
+        }
+        .btn-camera:hover {
+            background: #218838;
+            transform: scale(1.1);
+        }
+        .btn-camera.retake {
+            background: #ffc107;
+        }
+        .btn-camera.retake:hover {
+            background: #e0a800;
+        }
+        .action-section {
+            padding: 1rem;
+            text-align: center;
+        }
+        .action-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #2c3e50;
+        }
+        .btn-action {
+            padding: 0.7rem 1.5rem; 
+            border-radius: 12px; 
+            font-weight: 600;
+            text-transform: uppercase; 
+            letter-spacing: 0.3px; 
+            margin: 0.3rem;
+            font-size: 0.85rem;
+            min-width: 140px;
+        }
+        .btn-entrada {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none; color: white;
+        }
+        .btn-entrada:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+        }
+        .btn-salida {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            border: none; color: white;
+        }
+        .btn-salida:hover {
+            background: linear-gradient(135deg, #e0a800 0%, #e8690b 100%);
+        }
+        .btn-action:disabled {
+            background: #e9ecef !important;
+            color: #6c757d !important;
+            cursor: not-allowed;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 0.8rem;
+        }
+        .back-link a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s ease;
+        }
+        .back-link a:hover {
+            color: #28a745;
+        }
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .progress-step {
+            width: 30px;
+            height: 4px;
+            background: #dee2e6;
+            margin: 0 0.2rem;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+        .progress-step.active {
+            background: #28a745;
+        }
+        .compact-divider {
+            height: 1px;
+            background: #dee2e6;
+            margin: 0.8rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Card -->
+        <div class="card">
+            <div class="header-card">
+                <div class="employee-avatar" id="employee-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="employee-name" id="employee-name">Cargando empleado...</div>
+                <div class="employee-details" id="employee-details">...</div>
+                <div class="clock-display">
+                    <div class="clock-time" id="current-time">--:--:--</div>
+                    <div class="clock-date" id="current-date">Cargando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Indicator -->
+        <div class="progress-indicator">
+            <div class="progress-step" id="step-gps"></div>
+            <div class="progress-step" id="step-location"></div>
+            <div class="progress-step" id="step-photo"></div>
+        </div>
+        
+        <!-- Status Card -->
+        <div class="card">
+            <div class="status-card">
+                <div class="status-section-title">
+                    <i class="fas fa-tasks me-2"></i>Verificaciones
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-icon status-pending" id="gps-status">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div class="status-text">
+                        <div class="status-title">GPS</div>
+                        <div class="status-description" id="gps-text">Obteniendo coordenadas...</div>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-icon status-pending" id="location-status">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="status-text">
+                        <div class="status-title">Ubicación</div>
+                        <div class="status-description" id="location-text">Verificando zona...</div>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-icon status-pending" id="photo-status">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="status-text">
+                        <div class="status-title">Fotografía</div>
+                        <div class="status-description" id="photo-text">Pendiente...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Camera Card -->
+        <div class="card">
+            <div class="camera-section">
+                <div class="status-section-title">
+                    <i class="fas fa-camera me-2"></i>Fotografía
+                </div>
+                
+                <div class="camera-preview" id="camera-preview">
+                    <div class="camera-placeholder">
+                        <i class="fas fa-camera"></i>
+                        <p>Toque para activar cámara</p>
+                    </div>
+                </div>
+                
+                <div class="camera-controls">
+                    <button class="btn btn-camera" id="btn-camera" onclick="initCamera()">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <button class="btn btn-camera" id="btn-capture" onclick="capturePhoto()" style="display: none;">
+                        <i class="fas fa-circle"></i>
+                    </button>
+                    <button class="btn btn-camera retake" id="btn-retake" onclick="retakePhoto()" style="display: none;">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                
+                <canvas id="canvas" style="display: none;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Action Card -->
+        <div class="card">
+            <div class="action-section">
+                <div class="action-title">
+                    <i class="fas fa-clock me-2"></i>Registro
+                </div>
+                
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-action btn-entrada" id="btn-entrada" onclick="registrarAsistencia('entrada')" disabled>
+                        <i class="fas fa-sign-in-alt me-2"></i>Entrada
+                    </button>
+                    <button class="btn btn-action btn-salida" id="btn-salida" onclick="registrarAsistencia('salida')" disabled>
+                        <i class="fas fa-sign-out-alt me-2"></i>Salida
+                    </button>
+                </div>
+                
+                <div class="compact-divider"></div>
+                
+                <div class="back-link">
+                    <a href="/empleado">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let empleado = null;
+        let currentLocation = null;
+        let capturedPhoto = null;
+        let stream = null;
+        let hasGPS = false;
+        let hasLocation = false;
+        let hasPhoto = false;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando aplicación compacta...');
+            initializeApp();
+        });
+        
+        function initializeApp() {
+            const empleadoData = sessionStorage.getItem('empleado');
+            if (!empleadoData) {
+                alert('Sesión expirada. Regresando al portal...');
+                window.location.href = '/empleado';
+                return;
+            }
+            
+            empleado = JSON.parse(empleadoData);
+            console.log('Empleado cargado:', empleado);
+            
+            // Mostrar datos del empleado
+            document.getElementById('employee-name').textContent = `${empleado.nombre} ${empleado.apellido}`;
+            document.getElementById('employee-details').textContent = `${empleado.cargo || 'Empleado'} • ID: ${empleado.id}`;
+            document.getElementById('employee-avatar').textContent = empleado.nombre.charAt(0) + empleado.apellido.charAt(0);
+            
+            // Inicializar reloj
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Iniciar proceso de verificaciones
+            setTimeout(getLocation, 1000);
+        }
+        
+        function updateClock() {
+            const now = new Date();
+            
+            const timeString = now.toLocaleTimeString('es-ES', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const dateString = now.toLocaleDateString('es-ES', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            });
+            
+            document.getElementById('current-time').textContent = timeString;
+            document.getElementById('current-date').textContent = dateString;
+        }
+        
+        function updateStatus(type, status, text) {
+            const statusIcon = document.getElementById(type + '-status');
+            const statusText = document.getElementById(type + '-text');
+            const progressStep = document.getElementById('step-' + type);
+            
+            if (statusIcon && statusText) {
+                statusIcon.className = 'status-icon status-' + status;
+                statusText.textContent = text;
+                
+                const icon = statusIcon.querySelector('i');
+                if (icon) {
+                    if (status === 'success') {
+                        icon.className = 'fas fa-check';
+                        if (progressStep) progressStep.classList.add('active');
+                    } else if (status === 'error') {
+                        icon.className = 'fas fa-times';
+                    } else {
+                        icon.className = 'fas fa-spinner fa-spin';
+                    }
+                }
+            }
+            
+            updateActionButtons();
+        }
+        
+        function getLocation() {
+            console.log('Obteniendo ubicación GPS...');
+            
+            if (!navigator.geolocation) {
+                updateStatus('gps', 'error', 'GPS no disponible');
+                return;
+            }
+            
+            updateStatus('gps', 'pending', 'Obteniendo coordenadas...');
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                    
+                    hasGPS = true;
+                    updateStatus('gps', 'success', `${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`);
+                    
+                    verifyLocation();
+                },
+                function(error) {
+                    console.error('Error GPS:', error);
+                    updateStatus('gps', 'error', 'Error obteniendo ubicación');
+                },
+                {
+                    timeout: 10000,
+                    maximumAge: 60000,
+                    enableHighAccuracy: true
+                }
+            );
+        }
+        
+        function verifyLocation() {
+            console.log('Verificando ubicación autorizada...');
+            updateStatus('location', 'pending', 'Verificando zona...');
+            
+            fetch('/api/verificar_ubicacion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latitud: currentLocation.latitude,
+                    longitud: currentLocation.longitude
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    hasLocation = true;
+                    updateStatus('location', 'success', `${result.ubicacion.nombre}`);
+                } else {
+                    updateStatus('location', 'error', result.message || 'Ubicación no autorizada');
+                }
+            })
+            .catch(error => {
+                console.error('Error verificando ubicación:', error);
+                updateStatus('location', 'error', 'Error de conexión');
+            });
+        }
+        
+        function initCamera() {
+            console.log('Iniciando cámara...');
+            
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            })
+            .then(function(mediaStream) {
+                stream = mediaStream;
+                
+                const video = document.createElement('video');
+                video.className = 'w-100 h-100';
+                video.style.objectFit = 'cover';
+                video.style.borderRadius = '10px';
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+                
+                const preview = document.getElementById('camera-preview');
+                preview.innerHTML = '';
+                preview.appendChild(video);
+                
+                document.getElementById('btn-camera').style.display = 'none';
+                document.getElementById('btn-capture').style.display = 'inline-block';
+                
+                updateStatus('photo', 'pending', 'Cámara lista, toque capturar');
+            })
+            .catch(function(error) {
+                console.error('Error accediendo a la cámara:', error);
+                updateStatus('photo', 'error', 'Error accediendo a cámara');
+            });
+        }
+        
+        function capturePhoto() {
+            console.log('Capturando fotografía...');
+            
+            const video = document.querySelector('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            ctx.drawImage(video, 0, 0);
+            
+            capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            
+            const img = document.createElement('img');
+            img.className = 'w-100 h-100';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '10px';
+            img.src = capturedPhoto;
+            
+            const preview = document.getElementById('camera-preview');
+            preview.innerHTML = '';
+            preview.appendChild(img);
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            document.getElementById('btn-capture').style.display = 'none';
+            document.getElementById('btn-retake').style.display = 'inline-block';
+            
+            hasPhoto = true;
+            updateStatus('photo', 'success', 'Fotografía capturada');
+        }
+        
+        function retakePhoto() {
+            capturedPhoto = null;
+            hasPhoto = false;
+            
+            document.getElementById('btn-retake').style.display = 'none';
+            document.getElementById('btn-camera').style.display = 'inline-block';
+            
+            const preview = document.getElementById('camera-preview');
+            preview.innerHTML = '<div class="camera-placeholder"><i class="fas fa-camera"></i><p>Toque para activar cámara</p></div>';
+            
+            updateStatus('photo', 'pending', 'Pendiente...');
+        }
+        
+        function updateActionButtons() {
+            const btnEntrada = document.getElementById('btn-entrada');
+            const btnSalida = document.getElementById('btn-salida');
+            
+            const canRegister = hasGPS && hasLocation && hasPhoto;
+            
+            btnEntrada.disabled = !canRegister;
+            btnSalida.disabled = !canRegister;
+            
+            if (canRegister) {
+                btnEntrada.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Entrada';
+                btnSalida.innerHTML = '<i class="fas fa-sign-out-alt me-2"></i>Salida';
+            } else {
+                btnEntrada.innerHTML = '<i class="fas fa-lock me-2"></i>Bloqueado';
+                btnSalida.innerHTML = '<i class="fas fa-lock me-2"></i>Bloqueado';
+            }
+        }
+        
+        function registrarAsistencia(tipo) {
+            if (!hasGPS || !hasLocation || !hasPhoto) {
+                alert('Complete todas las verificaciones primero.');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-' + tipo);
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+            btn.disabled = true;
+            
+            fetch('/api/asistencia_empleado', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    empleado_id: empleado.id,
+                    tipo: tipo,
+                    latitud: currentLocation.latitude,
+                    longitud: currentLocation.longitude,
+                    foto: capturedPhoto
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(`${tipo.toUpperCase()} registrada exitosamente!\n\nHora: ${result.hora}\nUbicación: ${result.ubicacion || 'Registrada'}`);
+                    
+                    setTimeout(() => {
+                        window.location.href = '/empleado';
+                    }, 2000);
+                } else {
+                    alert(result.message || 'Error registrando asistencia');
+                }
+            })
+            .catch(error => {
+                console.error('Error registrando asistencia:', error);
+                alert('Error de conexión. Intente nuevamente.');
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html> 

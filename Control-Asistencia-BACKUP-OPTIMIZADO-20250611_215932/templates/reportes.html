@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes - Control de Asistencia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="fas fa-chart-bar me-2 text-primary"></i>
+            Reportes de Asistencia
+        </h1>
+    </div>
+</div>
+
+<!-- Filtros de reporte -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="fecha-inicio" class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control" id="fecha-inicio">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="fecha-fin" class="form-label">Fecha Fin</label>
+                        <input type="date" class="form-control" id="fecha-fin">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="empleado-filtro" class="form-label">Empleado</label>
+                        <select class="form-select" id="empleado-filtro">
+                            <option value="">Todos los empleados</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button class="btn btn-primary" onclick="generarReporte()">
+                                <i class="fas fa-search me-2"></i>Generar Reporte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas del período -->
+<div class="row mb-4" id="estadisticas-periodo" style="display: none;">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Registros</h6>
+                <h3 class="mb-0" id="total-registros">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">Días Completos</h6>
+                <h3 class="mb-0" id="dias-completos">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h6 class="card-title">Solo Entradas</h6>
+                <h3 class="mb-0" id="solo-entradas">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h6 class="card-title">Sin Registros</h6>
+                <h3 class="mb-0" id="sin-registros">0</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de reporte -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>Detalle de Asistencia
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="exportarCSV()" id="btn-exportar" style="display: none;">
+                        <i class="fas fa-download me-1"></i>Exportar CSV
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="imprimirReporte()" id="btn-imprimir" style="display: none;">
+                        <i class="fas fa-print me-1"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabla-reporte">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Empleado</th>
+                                <th>Cédula</th>
+                                <th>Cargo</th>
+                                <th>Hora Entrada</th>
+                                <th>Hora Salida</th>
+                                <th>Horas Trabajadas</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-reporte">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Seleccione un rango de fechas y haga clic en "Generar Reporte"
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let datosReporte = [];
+let empleados = [];
+
+// Cargar empleados para el filtro
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados');
+        empleados = await response.json();
+        
+        const select = document.getElementById('empleado-filtro');
+        select.innerHTML = '<option value="">Todos los empleados</option>';
+        
+        empleados.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp.id;
+            option.textContent = `${emp.nombre} ${emp.apellido}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar empleados:', error);
+    }
+}
+
+// Generar reporte
+async function generarReporte() {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+    const empleadoId = document.getElementById('empleado-filtro').value;
+    
+    if (!fechaInicio || !fechaFin) {
+        alert('Por favor seleccione el rango de fechas');
+        return;
+    }
+    
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+        alert('La fecha de inicio no puede ser mayor que la fecha de fin');
+        return;
+    }
+    
+    try {
+        const params = new URLSearchParams({
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin
+        });
+        
+        if (empleadoId) {
+            params.append('empleado_id', empleadoId);
+        }
+        
+        const response = await fetch(`/api/reportes/asistencia?${params}`);
+        datosReporte = await response.json();
+        
+        mostrarReporte();
+        mostrarEstadisticas();
+        
+        // Mostrar botones de exportar e imprimir
+        document.getElementById('btn-exportar').style.display = 'inline-block';
+        document.getElementById('btn-imprimir').style.display = 'inline-block';
+        
+    } catch (error) {
+        console.error('Error al generar reporte:', error);
+        alert('Error al generar el reporte');
+    }
+}
+
+// Mostrar reporte en la tabla
+function mostrarReporte() {
+    const tbody = document.getElementById('tbody-reporte');
+    tbody.innerHTML = '';
+    
+    if (datosReporte.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No se encontraron registros para el período seleccionado
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    datosReporte.forEach(registro => {
+        const fila = document.createElement('tr');
+        
+        // Calcular horas trabajadas
+        let horasTrabajadas = 'N/A';
+        let estado = '<span class="badge bg-danger">Incompleto</span>';
+        
+        if (registro.hora_entrada && registro.hora_salida) {
+            const entrada = new Date(`2000-01-01 ${registro.hora_entrada}`);
+            const salida = new Date(`2000-01-01 ${registro.hora_salida}`);
+            const diffMs = salida - entrada;
+            const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            horasTrabajadas = `${diffHrs}:${diffMins.toString().padStart(2, '0')}`;
+            estado = '<span class="badge bg-success">Completo</span>';
+        } else if (registro.hora_entrada) {
+            estado = '<span class="badge bg-warning">Solo entrada</span>';
+        }
+        
+        fila.innerHTML = `
+            <td>${new Date(registro.fecha).toLocaleDateString('es-ES')}</td>
+            <td>${registro.nombre} ${registro.apellido}</td>
+            <td>${registro.cedula}</td>
+            <td>${registro.cargo || 'N/A'}</td>
+            <td>${registro.hora_entrada || '<span class="text-muted">No registrada</span>'}</td>
+            <td>${registro.hora_salida || '<span class="text-muted">No registrada</span>'}</td>
+            <td>${horasTrabajadas}</td>
+            <td>${estado}</td>
+        `;
+        tbody.appendChild(fila);
+    });
+}
+
+// Mostrar estadísticas del período
+function mostrarEstadisticas() {
+    const totalRegistros = datosReporte.length;
+    const diasCompletos = datosReporte.filter(r => r.hora_entrada && r.hora_salida).length;
+    const soloEntradas = datosReporte.filter(r => r.hora_entrada && !r.hora_salida).length;
+    const sinRegistros = datosReporte.filter(r => !r.hora_entrada && !r.hora_salida).length;
+    
+    document.getElementById('total-registros').textContent = totalRegistros;
+    document.getElementById('dias-completos').textContent = diasCompletos;
+    document.getElementById('solo-entradas').textContent = soloEntradas;
+    document.getElementById('sin-registros').textContent = sinRegistros;
+    
+    document.getElementById('estadisticas-periodo').style.display = 'block';
+}
+
+// Exportar a CSV
+function exportarCSV() {
+    if (datosReporte.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+    
+    let csv = 'Fecha,Empleado,Cédula,Cargo,Hora Entrada,Hora Salida,Estado\n';
+    
+    datosReporte.forEach(registro => {
+        const estado = (registro.hora_entrada && registro.hora_salida) ? 'Completo' : 
+                      registro.hora_entrada ? 'Solo entrada' : 'Sin registro';
+        
+        csv += `${registro.fecha},"${registro.nombre} ${registro.apellido}",${registro.cedula},"${registro.cargo || 'N/A'}","${registro.hora_entrada || ''}","${registro.hora_salida || ''}","${estado}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reporte_asistencia_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Imprimir reporte
+function imprimirReporte() {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+    
+    const ventanaImpresion = window.open('', '_blank');
+    ventanaImpresion.document.write(`
+        <html>
+        <head>
+            <title>Reporte de Asistencia</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                .header { text-align: center; margin-bottom: 20px; }
+                .badge-success { background-color: #28a745; color: white; padding: 2px 6px; border-radius: 3px; }
+                .badge-warning { background-color: #ffc107; color: black; padding: 2px 6px; border-radius: 3px; }
+                .badge-danger { background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Reporte de Asistencia</h1>
+                <p>Período: ${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}</p>
+                <p>Generado el: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+            </div>
+            ${document.getElementById('tabla-reporte').outerHTML}
+        </body>
+        </html>
+    `);
+    ventanaImpresion.document.close();
+    ventanaImpresion.print();
+}
+
+// Establecer fechas por defecto
+function establecerFechasPorDefecto() {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    
+    document.getElementById('fecha-inicio').value = inicioMes.toISOString().split('T')[0];
+    document.getElementById('fecha-fin').value = hoy.toISOString().split('T')[0];
+}
+
+// Inicializar página
+document.addEventListener('DOMContentLoaded', function() {
+    establecerFechasPorDefecto();
+    cargarEmpleados();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Control de Asistencia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                Dashboard
+            </h1>
+            <div class="text-end">
+                <div class="h5 mb-0" id="fecha-actual"></div>
+                <div class="h6 text-muted" id="hora-actual"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tarjetas de estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Presentes Hoy</h6>
+                        <h3 class="mb-0" id="presentes-hoy">0</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-user-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Entradas</h6>
+                        <h3 class="mb-0" id="entradas-hoy">0</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-sign-in-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Salidas</h6>
+                        <h3 class="mb-0" id="salidas-hoy">0</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-sign-out-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Empleados</h6>
+                        <h3 class="mb-0" id="total-empleados">0</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="/registro" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-clock me-2"></i>
+                            Registrar Asistencia
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/empleados" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Gestionar Empleados
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/reportes" class="btn btn-info btn-lg w-100">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Ver Reportes
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-warning btn-lg w-100" onclick="actualizarDashboard()">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Asistencia del día -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>Asistencia de Hoy
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarAsistenciaHoy()">
+                    <i class="fas fa-refresh me-1"></i>Actualizar
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Cédula</th>
+                                <th>Cargo</th>
+                                <th>Hora Entrada</th>
+                                <th>Hora Salida</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-asistencia-hoy">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Cargando datos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Actualizar fecha y hora
+function actualizarFechaHora() {
+    const ahora = new Date();
+    const opciones = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    
+    document.getElementById('fecha-actual').textContent = 
+        ahora.toLocaleDateString('es-ES', opciones);
+    document.getElementById('hora-actual').textContent = 
+        ahora.toLocaleTimeString('es-ES');
+}
+
+// Cargar estadísticas del dashboard
+async function actualizarDashboard() {
+    try {
+        // Cargar empleados totales
+        const responseEmpleados = await fetch('/api/empleados');
+        const empleados = await responseEmpleados.json();
+        document.getElementById('total-empleados').textContent = empleados.length;
+        
+        // Cargar asistencia de hoy
+        await cargarAsistenciaHoy();
+        
+    } catch (error) {
+        console.error('Error al actualizar dashboard:', error);
+    }
+}
+
+// Cargar asistencia del día actual
+async function cargarAsistenciaHoy() {
+    try {
+        const response = await fetch('/api/asistencia/hoy');
+        const asistencia = await response.json();
+        
+        const tbody = document.getElementById('tabla-asistencia-hoy');
+        tbody.innerHTML = '';
+        
+        let presentes = 0;
+        let entradas = 0;
+        let salidas = 0;
+        
+        if (asistencia.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No hay registros de asistencia para hoy
+                    </td>
+                </tr>
+            `;
+        } else {
+            asistencia.forEach(registro => {
+                const fila = document.createElement('tr');
+                
+                if (registro.hora_entrada) entradas++;
+                if (registro.hora_salida) salidas++;
+                if (registro.hora_entrada && !registro.hora_salida) presentes++;
+                
+                const estado = registro.hora_entrada && registro.hora_salida ? 
+                    '<span class="badge bg-success">Completado</span>' : 
+                    registro.hora_entrada ? 
+                    '<span class="badge bg-warning">En oficina</span>' : 
+                    '<span class="badge bg-danger">Sin entrada</span>';
+                
+                fila.innerHTML = `
+                    <td>
+                        <strong>${registro.nombre} ${registro.apellido}</strong>
+                    </td>
+                    <td>${registro.cedula}</td>
+                    <td>${registro.cargo || 'N/A'}</td>
+                    <td>${registro.hora_entrada || '<span class="text-muted">No registrada</span>'}</td>
+                    <td>${registro.hora_salida || '<span class="text-muted">No registrada</span>'}</td>
+                    <td>${estado}</td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+        
+        // Actualizar estadísticas
+        document.getElementById('presentes-hoy').textContent = presentes;
+        document.getElementById('entradas-hoy').textContent = entradas;
+        document.getElementById('salidas-hoy').textContent = salidas;
+        
+    } catch (error) {
+        console.error('Error al cargar asistencia:', error);
+        document.getElementById('tabla-asistencia-hoy').innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al cargar los datos
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Inicializar página
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarFechaHora();
+    actualizarDashboard();
+    
+    // Actualizar hora cada segundo
+    setInterval(actualizarFechaHora, 1000);
+    
+    // Actualizar dashboard cada 30 segundos
+    setInterval(actualizarDashboard, 30000);
+});
+</script>
+{% endblock %} 

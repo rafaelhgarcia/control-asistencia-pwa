@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Empleado - Control de Asistencia</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        .portal-card {
+            background: white;
+            border-radius: 25px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .portal-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .portal-icon {
+            font-size: 3.5rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .portal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .portal-subtitle {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .clock-display {
+            text-align: center;
+            color: #28a745;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(32, 201, 151, 0.1) 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+        
+        .current-time {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 0.3rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .current-date {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: capitalize;
+        }
+        
+        .pin-container {
+            margin-bottom: 2rem;
+        }
+        
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .pin-dot {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #dee2e6;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .pin-dot.filled {
+            background: #28a745;
+            border-color: #28a745;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+        
+        .pin-dot.error {
+            background: #dc3545;
+            border-color: #dc3545;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 1.5rem 0;
+        }
+        
+        .keypad-btn {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 1.2rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .keypad-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(40, 167, 69, 0.2);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .keypad-btn:hover {
+            background: #e9ecef;
+            border-color: #28a745;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .keypad-btn:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .keypad-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .keypad-btn.clear {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .keypad-btn.clear:hover {
+            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+            border-color: #bd2130;
+        }
+        
+        .keypad-btn.verify {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-color: #28a745;
+            grid-column: span 2;
+        }
+        
+        .keypad-btn.verify:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+        }
+        
+        .message-container {
+            margin-bottom: 1.5rem;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #28a745;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-section {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-text {
+            color: #155724;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .footer-actions {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-back {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .btn-back:hover {
+            color: #28a745;
+            text-decoration: none;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .portal-card {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .keypad {
+                gap: 10px;
+            }
+            
+            .keypad-btn {
+                padding: 1rem;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="portal-card">
+                    <!-- Header -->
+                    <div class="portal-header">
+                        <div class="portal-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h1 class="portal-title">Portal Empleado</h1>
+                        <p class="portal-subtitle">Ingrese su PIN de acceso personal</p>
+                    </div>
+                    
+                    <!-- Reloj -->
+                    <div class="clock-display">
+                        <div class="current-time" id="current-time">--:--:--</div>
+                        <div class="current-date" id="current-date">Cargando fecha...</div>
+                    </div>
+                    
+                    <!-- Display PIN -->
+                    <div class="pin-container">
+                        <div class="pin-display">
+                            <div class="pin-dot" id="dot-1"></div>
+                            <div class="pin-dot" id="dot-2"></div>
+                            <div class="pin-dot" id="dot-3"></div>
+                            <div class="pin-dot" id="dot-4"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Teclado numérico optimizado -->
+                    <div class="keypad">
+                        <button class="btn keypad-btn" onclick="addDigit('1')" data-number="1">
+                            1
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('2')" data-number="2">
+                            2
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('3')" data-number="3">
+                            3
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('4')" data-number="4">
+                            4
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('5')" data-number="5">
+                            5
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('6')" data-number="6">
+                            6
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('7')" data-number="7">
+                            7
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('8')" data-number="8">
+                            8
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('9')" data-number="9">
+                            9
+                        </button>
+                        <button class="btn keypad-btn clear" onclick="clearPin()" title="Borrar">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                        <button class="btn keypad-btn" onclick="addDigit('0')" data-number="0">
+                            0
+                        </button>
+                        <button class="btn keypad-btn verify" onclick="verifyPin()" id="verify-btn" title="Verificar PIN">
+                            <i class="fas fa-check me-2"></i>Verificar
+                        </button>
+                    </div>
+                    
+                    <!-- Loading spinner -->
+                    <div class="loading-spinner" id="loading">
+                        <div class="spinner"></div>
+                        <p class="mt-2 text-muted">Verificando PIN...</p>
+                    </div>
+                    
+                    <!-- Mensajes -->
+                    <div class="message-container">
+                        <div id="message" class="message"></div>
+                    </div>
+                    
+                    <!-- Información -->
+                    <div class="info-section">
+                        <p class="info-text">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Su PIN personal fue proporcionado por el administrador del sistema
+                        </p>
+                    </div>
+                    
+                    <!-- Acciones del pie -->
+                    <div class="footer-actions">
+                        <a href="/" class="btn-back">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Volver al menú principal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Estado de la aplicación
+        const AppState = {
+            currentPin: '',
+            isVerifying: false,
+            attemptCount: 0,
+            maxAttempts: 3,
+            lockoutTime: 30000, // 30 segundos
+            isLocked: false
+        };
+        
+        // Elementos DOM
+        const elements = {
+            pinDots: document.querySelectorAll('.pin-dot'),
+            message: document.getElementById('message'),
+            loading: document.getElementById('loading'),
+            verifyBtn: document.getElementById('verify-btn'),
+            keypadBtns: document.querySelectorAll('.keypad-btn'),
+            timeDisplay: document.getElementById('current-time'),
+            dateDisplay: document.getElementById('current-date')
+        };
+        
+        // Actualizar reloj en tiempo real
+        function updateClock() {
+            const now = new Date();
+            
+            const timeString = now.toLocaleTimeString('es-ES', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const dateString = now.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            elements.timeDisplay.textContent = timeString;
+            elements.dateDisplay.textContent = dateString;
+        }
+        
+        // Agregar dígito al PIN con validaciones
+        function addDigit(digit) {
+            if (AppState.isLocked || AppState.isVerifying) {
+                return;
+            }
+            
+            if (AppState.currentPin.length < 4) {
+                AppState.currentPin += digit;
+                updatePinDisplay();
+                
+                // Agregar feedback de sonido (si está disponible)
+                playSound('click');
+                
+                // Auto verificar si tiene 4 dígitos
+                if (AppState.currentPin.length === 4) {
+                    setTimeout(() => {
+                        verifyPin();
+                    }, 300);
+                }
+            }
+        }
+        
+        // Limpiar PIN con animación
+        function clearPin() {
+            if (AppState.isVerifying) return;
+            
+            AppState.currentPin = '';
+            updatePinDisplay();
+            hideMessage();
+            
+            // Animación de limpieza
+            elements.pinDots.forEach((dot, index) => {
+                setTimeout(() => {
+                    dot.classList.add('error');
+                    setTimeout(() => {
+                        dot.classList.remove('error', 'filled');
+                    }, 200);
+                }, index * 100);
+            });
+            
+            playSound('clear');
+        }
+        
+        // Actualizar display visual del PIN
+        function updatePinDisplay() {
+            elements.pinDots.forEach((dot, index) => {
+                if (index < AppState.currentPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+                dot.classList.remove('error');
+            });
+            
+            // Habilitar/deshabilitar botón de verificación
+            if (AppState.currentPin.length === 4) {
+                elements.verifyBtn.style.opacity = '1';
+                elements.verifyBtn.style.transform = 'scale(1.05)';
+            } else {
+                elements.verifyBtn.style.opacity = '0.7';
+                elements.verifyBtn.style.transform = 'scale(1)';
+            }
+        }
+        
+        // Verificar PIN con manejo de errores mejorado
+        async function verifyPin() {
+            if (AppState.currentPin.length !== 4 || AppState.isVerifying || AppState.isLocked) {
+                if (AppState.currentPin.length !== 4) {
+                    showMessage('Ingrese un PIN de 4 dígitos', 'warning');
+                }
+                return;
+            }
+            
+            AppState.isVerifying = true;
+            showLoading(true);
+            disableKeypad(true);
+            
+            try {
+                const response = await fetch('/empleado/verificar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pin: AppState.currentPin })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // PIN correcto
+                    AppState.attemptCount = 0;
+                    showMessage(`¡Bienvenido ${result.empleado.nombre}!`, 'success');
+                    
+                    // Animación de éxito
+                    elements.pinDots.forEach((dot, index) => {
+                        setTimeout(() => {
+                            dot.style.background = '#28a745';
+                            dot.style.transform = 'scale(1.3)';
+                        }, index * 100);
+                    });
+                    
+                    // Guardar datos del empleado
+                    sessionStorage.setItem('empleado', JSON.stringify(result.empleado));
+                    
+                    playSound('success');
+                    
+                    // Redirigir después de 2 segundos
+                    setTimeout(() => {
+                        window.location.href = '/empleado/registro';
+                    }, 2000);
+                    
+                } else {
+                    // PIN incorrecto
+                    AppState.attemptCount++;
+                    
+                    if (AppState.attemptCount >= AppState.maxAttempts) {
+                        // Bloquear temporalmente
+                        AppState.isLocked = true;
+                        showMessage(`Demasiados intentos fallidos. Bloqueado por ${AppState.lockoutTime/1000} segundos.`, 'error');
+                        
+                        setTimeout(() => {
+                            AppState.isLocked = false;
+                            AppState.attemptCount = 0;
+                            hideMessage();
+                            disableKeypad(false);
+                        }, AppState.lockoutTime);
+                        
+                    } else {
+                        const remainingAttempts = AppState.maxAttempts - AppState.attemptCount;
+                        showMessage(`PIN incorrecto. Intentos restantes: ${remainingAttempts}`, 'error');
+                    }
+                    
+                    // Animación de error
+                    elements.pinDots.forEach(dot => {
+                        dot.classList.add('error');
+                        setTimeout(() => {
+                            dot.classList.remove('error', 'filled');
+                        }, 500);
+                    });
+                    
+                    AppState.currentPin = '';
+                    playSound('error');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error de conexión. Verifique su conexión a internet.', 'error');
+                AppState.currentPin = '';
+                playSound('error');
+            } finally {
+                AppState.isVerifying = false;
+                showLoading(false);
+                if (!AppState.isLocked) {
+                    disableKeypad(false);
+                }
+                updatePinDisplay();
+            }
+        }
+        
+        // Mostrar/ocultar loading
+        function showLoading(show) {
+            elements.loading.style.display = show ? 'block' : 'none';
+        }
+        
+        // Habilitar/deshabilitar teclado
+        function disableKeypad(disable) {
+            elements.keypadBtns.forEach(btn => {
+                btn.disabled = disable;
+                btn.style.opacity = disable ? '0.5' : '1';
+            });
+        }
+        
+        // Mostrar mensaje con animación
+        function showMessage(text, type) {
+            const icon = getIcon(type);
+            elements.message.className = `message ${type}`;
+            elements.message.innerHTML = `<i class="fas fa-${icon} me-2"></i>${text}`;
+            elements.message.style.display = 'block';
+        }
+        
+        // Ocultar mensaje
+        function hideMessage() {
+            elements.message.style.display = 'none';
+        }
+        
+        // Obtener icono para el tipo de mensaje
+        function getIcon(type) {
+            const icons = {
+                success: 'check-circle',
+                error: 'exclamation-triangle',
+                warning: 'exclamation-circle',
+                info: 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+        
+        // Reproducir sonidos (si está disponible)
+        function playSound(type) {
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(context.destination);
+                
+                switch(type) {
+                    case 'click':
+                        oscillator.frequency.setValueAtTime(800, context.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, context.currentTime);
+                        break;
+                    case 'success':
+                        oscillator.frequency.setValueAtTime(523.25, context.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, context.currentTime);
+                        break;
+                    case 'error':
+                        oscillator.frequency.setValueAtTime(200, context.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, context.currentTime);
+                        break;
+                    case 'clear':
+                        oscillator.frequency.setValueAtTime(400, context.currentTime);
+                        gainNode.gain.setValueAtTime(0.05, context.currentTime);
+                        break;
+                }
+                
+                oscillator.start();
+                oscillator.stop(context.currentTime + 0.1);
+            } catch (e) {
+                // Sonido no disponible, ignorar
+            }
+        }
+        
+        // Inicialización de la aplicación
+        function initializeApp() {
+            // Actualizar reloj
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Animación de entrada
+            const card = document.querySelector('.portal-card');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(50px) scale(0.9)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0) scale(1)';
+            }, 200);
+            
+            // Manejar teclas del teclado físico
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Prevenir selección de texto
+            document.addEventListener('selectstart', e => e.preventDefault());
+            
+            // Agregar efectos hover a los botones
+            elements.keypadBtns.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    if (!btn.disabled) {
+                        btn.style.transform = 'translateY(-2px) scale(1.05)';
+                    }
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    if (!btn.disabled) {
+                        btn.style.transform = 'translateY(0) scale(1)';
+                    }
+                });
+            });
+        }
+        
+        // Manejar teclado físico
+        function handleKeyboard(e) {
+            e.preventDefault();
+            
+            if (AppState.isLocked || AppState.isVerifying) return;
+            
+            if (e.key >= '0' && e.key <= '9') {
+                addDigit(e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                clearPin();
+            } else if (e.key === 'Enter') {
+                verifyPin();
+            } else if (e.key === 'Escape') {
+                clearPin();
+            }
+        }
+        
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Limpiar recursos al salir
+        window.addEventListener('beforeunload', () => {
+            // Limpiar cualquier estado temporal
+            AppState.currentPin = '';
+        });
+    </script>
+</body>
+</html> 

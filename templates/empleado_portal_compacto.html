@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Empleado - Control de Asistencia</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 10px;
+        }
+        
+        .portal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .portal-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .portal-icon {
+            font-size: 2.5rem;
+            color: #28a745;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+        
+        .portal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.3rem;
+        }
+        
+        .portal-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .clock-display {
+            text-align: center;
+            color: #28a745;
+            margin-bottom: 1.5rem;
+            padding: 0.8rem;
+            background: rgba(40, 167, 69, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+        
+        .current-time {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 0.2rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .current-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .pin-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .pin-dot {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .pin-dot.filled {
+            background: #28a745;
+            border-color: #28a745;
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.4);
+        }
+        
+        .pin-dot.error {
+            background: #dc3545;
+            border-color: #dc3545;
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 1rem 0;
+        }
+        
+        .keypad-btn {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 0.8rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+        }
+        
+        .keypad-btn:hover {
+            background: #e9ecef;
+            border-color: #28a745;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+        
+        .keypad-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .keypad-btn.clear {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .keypad-btn.clear:hover {
+            background: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .keypad-btn.verify {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+            grid-column: span 2;
+        }
+        
+        .keypad-btn.verify:hover {
+            background: #218838;
+        }
+        
+        .info-section {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-item i {
+            margin-right: 0.5rem;
+            color: #28a745;
+            width: 16px;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .back-link a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+        
+        .back-link a:hover {
+            color: #28a745;
+        }
+        
+        .lockout-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .attempt-counter {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .attempt-counter.warning {
+            color: #dc3545;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-card">
+        <!-- Header -->
+        <div class="portal-header">
+            <div class="portal-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h2 class="portal-title">Portal Empleado</h2>
+            <p class="portal-subtitle">Ingrese su PIN de acceso</p>
+        </div>
+        
+        <!-- Clock Display -->
+        <div class="clock-display">
+            <div class="current-time" id="current-time">--:--:--</div>
+            <div class="current-date" id="current-date">Cargando...</div>
+        </div>
+        
+        <!-- Lockout Message -->
+        <div id="lockout-message" class="lockout-message" style="display: none;">
+            <i class="fas fa-lock me-2"></i>
+            Acceso bloqueado temporalmente. Intente nuevamente en <span id="lockout-timer">30</span> segundos.
+        </div>
+        
+        <!-- PIN Display -->
+        <div class="pin-container">
+            <div class="pin-display">
+                <div class="pin-dot" id="pin-dot-1"></div>
+                <div class="pin-dot" id="pin-dot-2"></div>
+                <div class="pin-dot" id="pin-dot-3"></div>
+                <div class="pin-dot" id="pin-dot-4"></div>
+            </div>
+            
+            <div class="attempt-counter" id="attempt-counter">
+                Intentos disponibles: <span id="attempts-left">3</span>
+            </div>
+        </div>
+        
+        <!-- Keypad -->
+        <div class="keypad">
+            <button class="keypad-btn" onclick="addDigit('1')">1</button>
+            <button class="keypad-btn" onclick="addDigit('2')">2</button>
+            <button class="keypad-btn" onclick="addDigit('3')">3</button>
+            <button class="keypad-btn" onclick="addDigit('4')">4</button>
+            <button class="keypad-btn" onclick="addDigit('5')">5</button>
+            <button class="keypad-btn" onclick="addDigit('6')">6</button>
+            <button class="keypad-btn" onclick="addDigit('7')">7</button>
+            <button class="keypad-btn" onclick="addDigit('8')">8</button>
+            <button class="keypad-btn" onclick="addDigit('9')">9</button>
+            <button class="keypad-btn clear" onclick="clearPin()">
+                <i class="fas fa-backspace"></i>
+            </button>
+            <button class="keypad-btn" onclick="addDigit('0')">0</button>
+            <button class="keypad-btn verify" onclick="verifyPin()">
+                <i class="fas fa-check me-2"></i>Verificar
+            </button>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-item">
+                <i class="fas fa-info-circle"></i>
+                Su PIN es único y personal
+            </div>
+            <div class="info-item">
+                <i class="fas fa-shield-alt"></i>
+                Mantenga su PIN seguro
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                Sistema disponible 24/7
+            </div>
+        </div>
+        
+        <!-- Back Link -->
+        <div class="back-link">
+            <a href="/">
+                <i class="fas fa-arrow-left me-2"></i>Volver al inicio
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentPin = '';
+        let failedAttempts = 0;
+        let maxAttempts = 3;
+        let lockoutDuration = 30; // segundos
+        let isLocked = false;
+        let lockoutTimer = null;
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            updateAttemptsDisplay();
+            
+            // Soporte para teclado físico
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Verificar si hay un lockout activo
+            checkLockoutStatus();
+        });
+        
+        function updateClock() {
+            const now = new Date();
+            
+            const timeString = now.toLocaleTimeString('es-ES', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const dateString = now.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+            });
+            
+            document.getElementById('current-time').textContent = timeString;
+            document.getElementById('current-date').textContent = dateString;
+        }
+        
+        function addDigit(digit) {
+            if (isLocked || currentPin.length >= 4) return;
+            
+            currentPin += digit;
+            updatePinDisplay();
+            
+            // Auto-verificar cuando se completan 4 dígitos
+            if (currentPin.length === 4) {
+                setTimeout(verifyPin, 500);
+            }
+        }
+        
+        function clearPin() {
+            if (isLocked) return;
+            
+            if (currentPin.length > 0) {
+                currentPin = currentPin.slice(0, -1);
+                updatePinDisplay();
+            }
+        }
+        
+        function updatePinDisplay() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`pin-dot-${i}`);
+                dot.classList.remove('filled', 'error');
+                
+                if (i <= currentPin.length) {
+                    dot.classList.add('filled');
+                }
+            }
+        }
+        
+        function showError() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`pin-dot-${i}`);
+                dot.classList.add('error');
+            }
+            
+            setTimeout(() => {
+                for (let i = 1; i <= 4; i++) {
+                    const dot = document.getElementById(`pin-dot-${i}`);
+                    dot.classList.remove('error');
+                }
+                currentPin = '';
+                updatePinDisplay();
+            }, 1000);
+        }
+        
+        function verifyPin() {
+            if (isLocked || currentPin.length !== 4) return;
+            
+            fetch('/empleado/verificar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pin: currentPin })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Guardar datos del empleado en sessionStorage
+                    sessionStorage.setItem('empleado', JSON.stringify(data.empleado));
+                    
+                    // Mostrar éxito y redirigir
+                    for (let i = 1; i <= 4; i++) {
+                        document.getElementById(`pin-dot-${i}`).style.background = '#28a745';
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = '/empleado/registro';
+                    }, 1000);
+                } else {
+                    failedAttempts++;
+                    updateAttemptsDisplay();
+                    showError();
+                    
+                    if (failedAttempts >= maxAttempts) {
+                        activateLockout();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError();
+            });
+        }
+        
+        function updateAttemptsDisplay() {
+            const attemptsLeft = Math.max(0, maxAttempts - failedAttempts);
+            const counter = document.getElementById('attempt-counter');
+            const attemptsSpan = document.getElementById('attempts-left');
+            
+            attemptsSpan.textContent = attemptsLeft;
+            
+            if (attemptsLeft <= 1) {
+                counter.classList.add('warning');
+            } else {
+                counter.classList.remove('warning');
+            }
+        }
+        
+        function activateLockout() {
+            isLocked = true;
+            currentPin = '';
+            updatePinDisplay();
+            
+            document.getElementById('lockout-message').style.display = 'block';
+            
+            // Deshabilitar botones del keypad
+            const buttons = document.querySelectorAll('.keypad-btn');
+            buttons.forEach(btn => btn.style.opacity = '0.5');
+            
+            // Iniciar countdown
+            let timeLeft = lockoutDuration;
+            lockoutTimer = setInterval(() => {
+                document.getElementById('lockout-timer').textContent = timeLeft;
+                timeLeft--;
+                
+                if (timeLeft < 0) {
+                    deactivateLockout();
+                }
+            }, 1000);
+        }
+        
+        function deactivateLockout() {
+            isLocked = false;
+            failedAttempts = 0;
+            
+            document.getElementById('lockout-message').style.display = 'none';
+            
+            // Rehabilitar botones del keypad
+            const buttons = document.querySelectorAll('.keypad-btn');
+            buttons.forEach(btn => btn.style.opacity = '1');
+            
+            updateAttemptsDisplay();
+            
+            if (lockoutTimer) {
+                clearInterval(lockoutTimer);
+                lockoutTimer = null;
+            }
+        }
+        
+        function checkLockoutStatus() {
+            // Aquí podrías verificar si hay un lockout activo desde el servidor
+            // Por ahora, solo reseteamos el estado local
+        }
+        
+        function handleKeyboard(event) {
+            if (isLocked) return;
+            
+            if (event.key >= '0' && event.key <= '9') {
+                addDigit(event.key);
+            } else if (event.key === 'Backspace') {
+                clearPin();
+            } else if (event.key === 'Enter') {
+                if (currentPin.length === 4) {
+                    verifyPin();
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

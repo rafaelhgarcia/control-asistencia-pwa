@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Registro de Asistencia - Control de Asistencia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="fas fa-user-check me-2 text-primary"></i>
+            Registro de Asistencia
+        </h1>
+    </div>
+</div>
+
+<!-- Reloj y fecha actual -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h2 id="reloj-tiempo" class="display-4 mb-2">--:--:--</h2>
+                <h5 id="reloj-fecha" class="mb-0">-- de -- de ----</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario de registro -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Marcar Entrada/Salida
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-asistencia">
+                    <!-- Selector de empleado -->
+                    <div class="mb-4">
+                        <label for="empleado" class="form-label">
+                            <i class="fas fa-user me-1"></i>Seleccionar Empleado
+                        </label>
+                        <select class="form-select form-select-lg" id="empleado" required>
+                            <option value="">-- Seleccione un empleado --</option>
+                            {% for empleado in empleados %}
+                            <option value="{{ empleado.id }}">
+                                {{ empleado.nombre }} {{ empleado.apellido }} - {{ empleado.cedula }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Información del empleado seleccionado -->
+                    <div id="info-empleado" class="alert alert-info d-none">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Nombre:</strong> <span id="empleado-nombre"></span><br>
+                                <strong>Cédula:</strong> <span id="empleado-cedula"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Cargo:</strong> <span id="empleado-cargo"></span><br>
+                                <strong>Departamento:</strong> <span id="empleado-departamento"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estado actual del empleado -->
+                    <div id="estado-empleado" class="mb-4 d-none">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Estado de Hoy</h6>
+                                <div id="estado-detalle"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <button type="button" class="btn btn-success btn-lg w-100" id="btn-entrada">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Marcar Entrada
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button type="button" class="btn btn-warning btn-lg w-100" id="btn-salida">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Marcar Salida
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="modal-confirmacion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Registro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="mensaje-confirmacion"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmar-registro">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historial reciente -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Registros Recientes
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarRegistrosRecientes()">
+                    <i class="fas fa-refresh me-1"></i>Actualizar
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Hora</th>
+                                <th>Empleado</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-registros-recientes">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Cargando registros...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let empleados = [];
+let registroActual = null;
+
+// Actualizar reloj
+function actualizarReloj() {
+    const ahora = new Date();
+    const tiempo = ahora.toLocaleTimeString('es-ES');
+    const fecha = ahora.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    document.getElementById('reloj-tiempo').textContent = tiempo;
+    document.getElementById('reloj-fecha').textContent = fecha;
+}
+
+// Cargar empleados
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('/api/empleados');
+        empleados = await response.json();
+    } catch (error) {
+        console.error('Error al cargar empleados:', error);
+    }
+}
+
+// Mostrar información del empleado
+function mostrarInfoEmpleado(empleadoId) {
+    const empleado = empleados.find(e => e.id == empleadoId);
+    if (empleado) {
+        document.getElementById('empleado-nombre').textContent = `${empleado.nombre} ${empleado.apellido}`;
+        document.getElementById('empleado-cedula').textContent = empleado.cedula;
+        document.getElementById('empleado-cargo').textContent = empleado.cargo || 'N/A';
+        document.getElementById('empleado-departamento').textContent = empleado.departamento || 'N/A';
+        document.getElementById('info-empleado').classList.remove('d-none');
+        
+        // Cargar estado actual
+        verificarEstadoEmpleado(empleadoId);
+    }
+}
+
+// Verificar estado actual del empleado
+async function verificarEstadoEmpleado(empleadoId) {
+    try {
+        const response = await fetch('/api/asistencia/hoy');
+        const asistencia = await response.json();
+        const registro = asistencia.find(a => a.empleado_id == empleadoId);
+        
+        const estadoDiv = document.getElementById('estado-empleado');
+        const detalleDiv = document.getElementById('estado-detalle');
+        const btnEntrada = document.getElementById('btn-entrada');
+        const btnSalida = document.getElementById('btn-salida');
+        
+        if (registro) {
+            let estado = '';
+            let botones = '';
+            
+            if (registro.hora_entrada && registro.hora_salida) {
+                estado = `
+                    <div class="text-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Jornada completada - Entrada: ${registro.hora_entrada}, Salida: ${registro.hora_salida}
+                    </div>
+                `;
+                btnEntrada.disabled = true;
+                btnSalida.disabled = true;
+            } else if (registro.hora_entrada) {
+                estado = `
+                    <div class="text-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        En oficina desde las ${registro.hora_entrada}
+                    </div>
+                `;
+                btnEntrada.disabled = true;
+                btnSalida.disabled = false;
+            } else {
+                estado = `
+                    <div class="text-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Sin entrada registrada hoy
+                    </div>
+                `;
+                btnEntrada.disabled = false;
+                btnSalida.disabled = true;
+            }
+            
+            detalleDiv.innerHTML = estado;
+            estadoDiv.classList.remove('d-none');
+        } else {
+            detalleDiv.innerHTML = `
+                <div class="text-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Sin registros para hoy
+                </div>
+            `;
+            estadoDiv.classList.remove('d-none');
+            btnEntrada.disabled = false;
+            btnSalida.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error al verificar estado:', error);
+    }
+}
+
+// Registrar asistencia
+async function registrarAsistencia(tipo) {
+    const empleadoId = document.getElementById('empleado').value;
+    if (!empleadoId) {
+        alert('Por favor seleccione un empleado');
+        return;
+    }
+    
+    const empleado = empleados.find(e => e.id == empleadoId);
+    const ahora = new Date();
+    const hora = ahora.toLocaleTimeString('es-ES');
+    
+    // Mostrar modal de confirmación
+    document.getElementById('mensaje-confirmacion').innerHTML = `
+        ¿Confirma marcar <strong>${tipo}</strong> para:<br>
+        <strong>${empleado.nombre} ${empleado.apellido}</strong><br>
+        Hora: <strong>${hora}</strong>
+    `;
+    
+    registroActual = { empleado_id: empleadoId, tipo: tipo };
+    
+    const modal = new bootstrap.Modal(document.getElementById('modal-confirmacion'));
+    modal.show();
+}
+
+// Confirmar registro
+async function confirmarRegistro() {
+    if (!registroActual) return;
+    
+    try {
+        const response = await fetch('/api/asistencia', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(registroActual)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-confirmacion'));
+            modal.hide();
+            
+            // Mostrar mensaje de éxito
+            mostrarMensaje('success', result.message);
+            
+            // Actualizar estado del empleado
+            verificarEstadoEmpleado(registroActual.empleado_id);
+            
+            // Cargar registros recientes
+            cargarRegistrosRecientes();
+        } else {
+            mostrarMensaje('danger', result.message);
+        }
+    } catch (error) {
+        console.error('Error al registrar asistencia:', error);
+        mostrarMensaje('danger', 'Error al registrar la asistencia');
+    }
+    
+    registroActual = null;
+}
+
+// Mostrar mensaje
+function mostrarMensaje(tipo, mensaje) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Cargar registros recientes
+async function cargarRegistrosRecientes() {
+    try {
+        const response = await fetch('/api/asistencia/hoy');
+        const asistencia = await response.json();
+        
+        const tbody = document.getElementById('tabla-registros-recientes');
+        tbody.innerHTML = '';
+        
+        if (asistencia.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        No hay registros para mostrar
+                    </td>
+                </tr>
+            `;
+        } else {
+            // Mostrar solo los últimos 10 registros
+            const registrosRecientes = asistencia.slice(-10).reverse();
+            
+            registrosRecientes.forEach(registro => {
+                if (registro.hora_entrada) {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${registro.hora_entrada}</td>
+                        <td>${registro.nombre} ${registro.apellido}</td>
+                        <td><span class="badge bg-success">Entrada</span></td>
+                        <td><i class="fas fa-sign-in-alt text-success"></i></td>
+                    `;
+                    tbody.appendChild(fila);
+                }
+                
+                if (registro.hora_salida) {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${registro.hora_salida}</td>
+                        <td>${registro.nombre} ${registro.apellido}</td>
+                        <td><span class="badge bg-warning">Salida</span></td>
+                        <td><i class="fas fa-sign-out-alt text-warning"></i></td>
+                    `;
+                    tbody.appendChild(fila);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar registros recientes:', error);
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar reloj
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+    
+    // Cargar datos iniciales
+    cargarEmpleados();
+    cargarRegistrosRecientes();
+    
+    // Eventos del formulario
+    document.getElementById('empleado').addEventListener('change', function() {
+        if (this.value) {
+            mostrarInfoEmpleado(this.value);
+        } else {
+            document.getElementById('info-empleado').classList.add('d-none');
+            document.getElementById('estado-empleado').classList.add('d-none');
+        }
+    });
+    
+    document.getElementById('btn-entrada').addEventListener('click', () => registrarAsistencia('entrada'));
+    document.getElementById('btn-salida').addEventListener('click', () => registrarAsistencia('salida'));
+    document.getElementById('confirmar-registro').addEventListener('click', confirmarRegistro);
+});
+</script>
+{% endblock %} 

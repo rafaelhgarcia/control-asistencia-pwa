@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Empleados - Administrador</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            padding: 1rem 0;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .employee-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .employee-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .employee-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #007bff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .pin-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            color: #28a745;
+        }
+        
+        .status-inactive {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-user-shield me-2"></i>
+                Panel Administrador
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/empleados">
+                            <i class="fas fa-users me-1"></i>Empleados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/ubicaciones">
+                            <i class="fas fa-map-marker-alt me-1"></i>Ubicaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/reportes">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>Administrador
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/logout">
+                                <i class="fas fa-sign-out-alt me-1"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-1">Gestión de Empleados</h1>
+                        <p class="text-muted mb-0">Administra los empleados de tu empresa</p>
+                    </div>
+                    <button class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Agregar Empleado
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="content-card text-center">
+                    <h3 class="text-primary mb-0" id="total-empleados">0</h3>
+                    <small class="text-muted">Total Empleados</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="content-card text-center">
+                    <h3 class="text-success mb-0" id="empleados-activos">0</h3>
+                    <small class="text-muted">Activos</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="content-card text-center">
+                    <h3 class="text-warning mb-0" id="presentes-hoy">0</h3>
+                    <small class="text-muted">Presentes Hoy</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="content-card text-center">
+                    <h3 class="text-info mb-0" id="nuevos-mes">0</h3>
+                    <small class="text-muted">Nuevos Este Mes</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee List -->
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Lista de Empleados
+                </h5>
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchEmployee" placeholder="Buscar empleado...">
+                </div>
+            </div>
+            
+            <div id="employeesList">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">Cargando empleados...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Agregar Nuevo Empleado
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmployeeForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre *</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="apellido" class="form-label">Apellido *</label>
+                                    <input type="text" class="form-control" id="apellido" name="apellido" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cedula" class="form-label">Cédula *</label>
+                                    <input type="text" class="form-control" id="cedula" name="cedula" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cargo" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="cargo" name="cargo">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento</label>
+                                    <input type="text" class="form-control" id="departamento" name="departamento">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefono" name="telefono">
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota:</strong> Se generará automáticamente un PIN de 4 dígitos para el empleado.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEmployee()">
+                        <i class="fas fa-save me-2"></i>
+                        Guardar Empleado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Display Modal -->
+    <div class="modal fade" id="pinModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key me-2"></i>
+                        PIN de Acceso Generado
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h4>¡Empleado creado exitosamente!</h4>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h5 class="mb-2">PIN de Acceso:</h5>
+                        <div style="font-size: 2rem; font-family: monospace; font-weight: bold; color: #007bff;" id="generatedPin">
+                            ----
+                        </div>
+                    </div>
+                    
+                    <p class="mb-3">
+                        <strong>Importante:</strong> Proporcione este PIN al empleado para que pueda acceder al sistema.
+                        El empleado usará este PIN para registrar su entrada y salida.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Variables globales
+        let employees = [];
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployees();
+            loadStatistics();
+            
+            // Configurar búsqueda
+            document.getElementById('searchEmployee').addEventListener('input', filterEmployees);
+        });
+        
+        // Cargar empleados
+        async function loadEmployees() {
+            try {
+                const response = await fetch('/api/empleados');
+                employees = await response.json();
+                displayEmployees(employees);
+            } catch (error) {
+                console.error('Error cargando empleados:', error);
+                document.getElementById('employeesList').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                        <p class="text-danger">Error cargando empleados</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Mostrar empleados
+        function displayEmployees(employeeList) {
+            const container = document.getElementById('employeesList');
+            
+            if (employeeList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay empleados registrados</h5>
+                        <p class="text-muted">Comienza agregando tu primer empleado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            employeeList.forEach(employee => {
+                const initials = `${employee.nombre.charAt(0)}${employee.apellido.charAt(0)}`;
+                const statusClass = employee.activo ? 'status-active' : 'status-inactive';
+                const statusText = employee.activo ? 'Activo' : 'Inactivo';
+                const statusIcon = employee.activo ? 'fa-check-circle' : 'fa-times-circle';
+                
+                html += `
+                    <div class="employee-card">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="employee-avatar">${initials}</div>
+                            </div>
+                            <div class="col">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h6 class="mb-1">${employee.nombre} ${employee.apellido}</h6>
+                                        <small class="text-muted">${employee.cargo || 'Sin cargo'}</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">Cédula</small><br>
+                                        <span>${employee.cedula}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">Departamento</small><br>
+                                        <span>${employee.departamento || 'N/A'}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">PIN</small><br>
+                                        <span class="pin-badge">${employee.pin_acceso}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">Estado</small><br>
+                                        <span class="${statusClass}">
+                                            <i class="fas ${statusIcon} me-1"></i>${statusText}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="viewEmployee(${employee.id})">
+                                                    <i class="fas fa-eye me-1"></i>Ver Detalles
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="editEmployee(${employee.id})">
+                                                    <i class="fas fa-edit me-1"></i>Editar
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="toggleEmployeeStatus(${employee.id})">
+                                                    <i class="fas fa-${employee.activo ? 'ban' : 'check'} me-1"></i>
+                                                    ${employee.activo ? 'Desactivar' : 'Activar'}
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Filtrar empleados
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
+            const filtered = employees.filter(emp => 
+                emp.nombre.toLowerCase().includes(searchTerm) ||
+                emp.apellido.toLowerCase().includes(searchTerm) ||
+                emp.cedula.toLowerCase().includes(searchTerm) ||
+                (emp.cargo && emp.cargo.toLowerCase().includes(searchTerm)) ||
+                (emp.departamento && emp.departamento.toLowerCase().includes(searchTerm))
+            );
+            displayEmployees(filtered);
+        }
+        
+        // Guardar empleado
+        async function saveEmployee() {
+            const form = document.getElementById('addEmployeeForm');
+            const formData = new FormData(form);
+            
+            const employeeData = {
+                nombre: formData.get('nombre'),
+                apellido: formData.get('apellido'),
+                cedula: formData.get('cedula'),
+                cargo: formData.get('cargo'),
+                departamento: formData.get('departamento'),
+                email: formData.get('email'),
+                telefono: formData.get('telefono')
+            };
+            
+            // Validación básica
+            if (!employeeData.nombre || !employeeData.apellido || !employeeData.cedula) {
+                alert('Por favor complete los campos obligatorios');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/empleados', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(employeeData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Cerrar modal de agregar
+                    const addModal = bootstrap.Modal.getInstance(document.getElementById('addEmployeeModal'));
+                    addModal.hide();
+                    
+                    // Mostrar PIN generado
+                    document.getElementById('generatedPin').textContent = result.pin;
+                    const pinModal = new bootstrap.Modal(document.getElementById('pinModal'));
+                    pinModal.show();
+                    
+                    // Limpiar formulario
+                    form.reset();
+                    
+                    // Recargar lista
+                    loadEmployees();
+                    loadStatistics();
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error agregando empleado:', error);
+                alert('Error de conexión');
+            }
+        }
+        
+        // Cargar estadísticas
+        async function loadStatistics() {
+            try {
+                const [employeesRes, attendanceRes] = await Promise.all([
+                    fetch('/api/empleados'),
+                    fetch('/api/asistencia/hoy')
+                ]);
+                
+                const employees = await employeesRes.json();
+                const attendance = await attendanceRes.json();
+                
+                const totalEmployees = employees.length;
+                const activeEmployees = employees.filter(emp => emp.activo).length;
+                const presentToday = attendance.filter(att => att.hora_entrada).length;
+                
+                // Calcular nuevos este mes (simulado)
+                const thisMonth = new Date().getMonth();
+                const newThisMonth = employees.filter(emp => {
+                    const empDate = new Date(emp.fecha_registro);
+                    return empDate.getMonth() === thisMonth;
+                }).length;
+                
+                document.getElementById('total-empleados').textContent = totalEmployees;
+                document.getElementById('empleados-activos').textContent = activeEmployees;
+                document.getElementById('presentes-hoy').textContent = presentToday;
+                document.getElementById('nuevos-mes').textContent = newThisMonth;
+                
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+        
+        // Funciones adicionales (placeholder)
+        function viewEmployee(id) {
+            console.log('Ver empleado:', id);
+            // Implementar vista de detalles
+        }
+        
+        function editEmployee(id) {
+            console.log('Editar empleado:', id);
+            // Implementar edición
+        }
+        
+        function toggleEmployeeStatus(id) {
+            console.log('Cambiar estado empleado:', id);
+            // Implementar cambio de estado
+        }
+    </script>
+</body>
+</html> 

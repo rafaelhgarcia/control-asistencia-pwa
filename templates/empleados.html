@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Empleados - Control de Asistencia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-users me-2 text-primary"></i>
+                Gestión de Empleados
+            </h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-empleado">
+                <i class="fas fa-user-plus me-2"></i>Agregar Empleado
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Empleados</h6>
+                        <h3 class="mb-0" id="total-empleados">{{ empleados|length }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Activos</h6>
+                        <h3 class="mb-0" id="empleados-activos">{{ empleados|length }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-user-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Presente Hoy</h6>
+                        <h3 class="mb-0" id="presentes-hoy">0</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y búsqueda -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" id="buscar-empleado" placeholder="Buscar por nombre, cédula o cargo...">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="filtro-departamento">
+            <option value="">Todos los departamentos</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-outline-primary w-100" onclick="cargarEmpleados()">
+            <i class="fas fa-sync-alt me-2"></i>Actualizar
+        </button>
+    </div>
+</div>
+
+<!-- Tabla de empleados -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Lista de Empleados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabla-empleados">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Cédula</th>
+                                <th>Cargo</th>
+                                <th>Departamento</th>
+                                <th>Estado Hoy</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-empleados">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Cargando empleados...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar empleado -->
+<div class="modal fade" id="modal-empleado" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Nuevo Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="form-empleado">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="apellido" class="form-label">Apellido *</label>
+                            <input type="text" class="form-control" id="apellido" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cedula" class="form-label">Cédula *</label>
+                            <input type="text" class="form-control" id="cedula" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="cargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="cargo">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="departamento" class="form-label">Departamento</label>
+                            <input type="text" class="form-control" id="departamento">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modal-confirmar-eliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea desactivar a este empleado?</p>
+                <div id="info-empleado-eliminar"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmar-eliminar">
+                    <i class="fas fa-trash me-2"></i>Desactivar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let empleados = [];
+let asistenciaHoy = [];
+let empleadoAEliminar = null;
+
+// Cargar empleados
+async function cargarEmpleados() {
+    try {
+        const [responseEmpleados, responseAsistencia] = await Promise.all([
+            fetch('/api/empleados'),
+            fetch('/api/asistencia/hoy')
+        ]);
+        
+        empleados = await responseEmpleados.json();
+        asistenciaHoy = await responseAsistencia.json();
+        
+        mostrarEmpleados();
+        actualizarEstadisticas();
+        cargarDepartamentos();
+        
+    } catch (error) {
+        console.error('Error al cargar empleados:', error);
+        mostrarError('Error al cargar los datos de empleados');
+    }
+}
+
+// Mostrar empleados en la tabla
+function mostrarEmpleados(empleadosFiltrados = null) {
+    const tbody = document.getElementById('tbody-empleados');
+    const empleadosAMostrar = empleadosFiltrados || empleados;
+    
+    tbody.innerHTML = '';
+    
+    if (empleadosAMostrar.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No se encontraron empleados
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    empleadosAMostrar.forEach(empleado => {
+        const asistencia = asistenciaHoy.find(a => a.empleado_id === empleado.id);
+        let estadoHoy = '<span class="badge bg-secondary">Sin registro</span>';
+        
+        if (asistencia) {
+            if (asistencia.hora_entrada && asistencia.hora_salida) {
+                estadoHoy = '<span class="badge bg-success">Completado</span>';
+            } else if (asistencia.hora_entrada) {
+                estadoHoy = '<span class="badge bg-warning">En oficina</span>';
+            }
+        }
+        
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center text-white me-3">
+                        ${empleado.nombre.charAt(0)}${empleado.apellido.charAt(0)}
+                    </div>
+                    <div>
+                        <strong>${empleado.nombre} ${empleado.apellido}</strong>
+                    </div>
+                </div>
+            </td>
+            <td>${empleado.cedula}</td>
+            <td>${empleado.cargo || 'N/A'}</td>
+            <td>${empleado.departamento || 'N/A'}</td>
+            <td>${estadoHoy}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editarEmpleado(${empleado.id})" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="verHistorialEmpleado(${empleado.id})" title="Historial">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="confirmarEliminarEmpleado(${empleado.id})" title="Desactivar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(fila);
+    });
+}
+
+// Actualizar estadísticas
+function actualizarEstadisticas() {
+    document.getElementById('total-empleados').textContent = empleados.length;
+    document.getElementById('empleados-activos').textContent = empleados.filter(e => e.activo).length;
+    
+    const presentesHoy = asistenciaHoy.filter(a => a.hora_entrada && !a.hora_salida).length;
+    document.getElementById('presentes-hoy').textContent = presentesHoy;
+}
+
+// Cargar departamentos para el filtro
+function cargarDepartamentos() {
+    const departamentos = [...new Set(empleados.map(e => e.departamento).filter(d => d))];
+    const select = document.getElementById('filtro-departamento');
+    
+    // Limpiar opciones existentes (excepto la primera)
+    select.innerHTML = '<option value="">Todos los departamentos</option>';
+    
+    departamentos.forEach(dept => {
+        const option = document.createElement('option');
+        option.value = dept;
+        option.textContent = dept;
+        select.appendChild(option);
+    });
+}
+
+// Filtrar empleados
+function filtrarEmpleados() {
+    const busqueda = document.getElementById('buscar-empleado').value.toLowerCase();
+    const departamento = document.getElementById('filtro-departamento').value;
+    
+    let empleadosFiltrados = empleados;
+    
+    if (busqueda) {
+        empleadosFiltrados = empleadosFiltrados.filter(emp => 
+            emp.nombre.toLowerCase().includes(busqueda) ||
+            emp.apellido.toLowerCase().includes(busqueda) ||
+            emp.cedula.toLowerCase().includes(busqueda) ||
+            (emp.cargo && emp.cargo.toLowerCase().includes(busqueda))
+        );
+    }
+    
+    if (departamento) {
+        empleadosFiltrados = empleadosFiltrados.filter(emp => emp.departamento === departamento);
+    }
+    
+    mostrarEmpleados(empleadosFiltrados);
+}
+
+// Agregar empleado
+async function agregarEmpleado(datosEmpleado) {
+    try {
+        const response = await fetch('/api/empleados', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datosEmpleado)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarMensaje('success', result.message);
+            cargarEmpleados();
+            
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-empleado'));
+            modal.hide();
+            
+            // Limpiar formulario
+            document.getElementById('form-empleado').reset();
+        } else {
+            mostrarMensaje('danger', result.message);
+        }
+    } catch (error) {
+        console.error('Error al agregar empleado:', error);
+        mostrarMensaje('danger', 'Error al agregar el empleado');
+    }
+}
+
+// Confirmar eliminar empleado
+function confirmarEliminarEmpleado(empleadoId) {
+    const empleado = empleados.find(e => e.id === empleadoId);
+    empleadoAEliminar = empleadoId;
+    
+    document.getElementById('info-empleado-eliminar').innerHTML = `
+        <strong>${empleado.nombre} ${empleado.apellido}</strong><br>
+        <small class="text-muted">Cédula: ${empleado.cedula}</small>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modal-confirmar-eliminar'));
+    modal.show();
+}
+
+// Eliminar empleado
+async function eliminarEmpleado() {
+    if (!empleadoAEliminar) return;
+    
+    try {
+        const response = await fetch(`/api/empleados/${empleadoAEliminar}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarMensaje('success', result.message);
+            cargarEmpleados();
+            
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modal-confirmar-eliminar'));
+            modal.hide();
+        } else {
+            mostrarMensaje('danger', result.message);
+        }
+    } catch (error) {
+        console.error('Error al eliminar empleado:', error);
+        mostrarMensaje('danger', 'Error al eliminar el empleado');
+    }
+    
+    empleadoAEliminar = null;
+}
+
+// Mostrar mensaje
+function mostrarMensaje(tipo, mensaje) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Mostrar error
+function mostrarError(mensaje) {
+    document.getElementById('tbody-empleados').innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${mensaje}
+            </td>
+        </tr>
+    `;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar datos iniciales
+    cargarEmpleados();
+    
+    // Formulario de empleado
+    document.getElementById('form-empleado').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const datosEmpleado = {
+            nombre: document.getElementById('nombre').value.trim(),
+            apellido: document.getElementById('apellido').value.trim(),
+            cedula: document.getElementById('cedula').value.trim(),
+            cargo: document.getElementById('cargo').value.trim(),
+            departamento: document.getElementById('departamento').value.trim()
+        };
+        
+        if (!datosEmpleado.nombre || !datosEmpleado.apellido || !datosEmpleado.cedula) {
+            mostrarMensaje('warning', 'Por favor complete los campos obligatorios');
+            return;
+        }
+        
+        agregarEmpleado(datosEmpleado);
+    });
+    
+    // Filtros
+    document.getElementById('buscar-empleado').addEventListener('input', filtrarEmpleados);
+    document.getElementById('filtro-departamento').addEventListener('change', filtrarEmpleados);
+    
+    // Confirmar eliminar
+    document.getElementById('confirmar-eliminar').addEventListener('click', eliminarEmpleado);
+    
+    // Limpiar formulario al cerrar modal
+    document.getElementById('modal-empleado').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('form-empleado').reset();
+    });
+});
+
+// Funciones placeholder para editar y ver historial
+function editarEmpleado(empleadoId) {
+    mostrarMensaje('info', 'Función de edición en desarrollo');
+}
+
+function verHistorialEmpleado(empleadoId) {
+    mostrarMensaje('info', 'Función de historial en desarrollo');
+}
+</script>
+
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: bold;
+}
+</style>
+{% endblock %} 

@@ -73,7 +73,7 @@
             <span class="input-group-text">
                 <i class="fas fa-search"></i>
             </span>
-            <input type="text" class="form-control" id="buscar-empleado" placeholder="Buscar por nombre, cédula o cargo...">
+            <input type="text" class="form-control" id="buscar-empleado" placeholder="Buscar por nombre, codigo o cargo...">
         </div>
     </div>
     <div class="col-md-3">
@@ -147,8 +147,8 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="cedula" class="form-label">Cédula *</label>
-                            <input type="text" class="form-control" id="cedula" required>
+                            <label for="codigo" class="form-label">Cédula *</label>
+                            <input type="text" class="form-control" id="codigo" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="cargo" class="form-label">Cargo</label>
@@ -264,7 +264,7 @@ function mostrarEmpleados(empleadosFiltrados = null) {
                     </div>
                 </div>
             </td>
-            <td>${empleado.cedula}</td>
+            <td>${empleado.codigo}</td>
             <td>${empleado.cargo || 'N/A'}</td>
             <td>${empleado.departamento || 'N/A'}</td>
             <td>${estadoHoy}</td>
@@ -322,7 +322,7 @@ function filtrarEmpleados() {
         empleadosFiltrados = empleadosFiltrados.filter(emp => 
             emp.nombre.toLowerCase().includes(busqueda) ||
             emp.apellido.toLowerCase().includes(busqueda) ||
-            emp.cedula.toLowerCase().includes(busqueda) ||
+            emp.codigo.toLowerCase().includes(busqueda) ||
             (emp.cargo && emp.cargo.toLowerCase().includes(busqueda))
         );
     }
@@ -373,7 +373,7 @@ function confirmarEliminarEmpleado(empleadoId) {
     
     document.getElementById('info-empleado-eliminar').innerHTML = `
         <strong>${empleado.nombre} ${empleado.apellido}</strong><br>
-        <small class="text-muted">Cédula: ${empleado.cedula}</small>
+        <small class="text-muted">Cédula: ${empleado.codigo}</small>
     `;
     
     const modal = new bootstrap.Modal(document.getElementById('modal-confirmar-eliminar'));
@@ -449,12 +449,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const datosEmpleado = {
             nombre: document.getElementById('nombre').value.trim(),
             apellido: document.getElementById('apellido').value.trim(),
-            cedula: document.getElementById('cedula').value.trim(),
+            codigo: document.getElementById('codigo').value.trim(),
             cargo: document.getElementById('cargo').value.trim(),
             departamento: document.getElementById('departamento').value.trim()
         };
         
-        if (!datosEmpleado.nombre || !datosEmpleado.apellido || !datosEmpleado.cedula) {
+        if (!datosEmpleado.nombre || !datosEmpleado.apellido || !datosEmpleado.codigo) {
             mostrarMensaje('warning', 'Por favor complete los campos obligatorios');
             return;
         }
